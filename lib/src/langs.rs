@@ -179,8 +179,8 @@ impl BenchmarkLanguage {
 impl fmt::Display for BenchmarkLanguage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            BenchmarkLanguage::Scc => f.write_str("Compiling-SC"),
-            BenchmarkLanguage::SccLin => f.write_str("Compiling-SC-Lin"),
+            BenchmarkLanguage::Scc => f.write_str("SCC"),
+            BenchmarkLanguage::SccLin => f.write_str("SCC-Lin"),
             BenchmarkLanguage::Rust => f.write_str("Rust"),
             BenchmarkLanguage::SmlNj => f.write_str("SML/NJ"),
             BenchmarkLanguage::SmlMlton => f.write_str("MLton"),

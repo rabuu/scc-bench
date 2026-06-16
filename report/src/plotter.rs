@@ -5,7 +5,7 @@ use plotters::{
     chart::ChartBuilder,
     drawing::IntoDrawingArea,
     prelude::{IntoFont, IntoTextStyle, PathElement, Rectangle},
-    style::{BLACK, Color, RED, RGBColor, WHITE},
+    style::{BLACK, Color, GREEN, RED, RGBColor, WHITE},
 };
 use std::{fs::create_dir_all, path::PathBuf};
 
@@ -23,8 +23,8 @@ const CROSS_THICKNESS: u32 = 5;
 fn lang_color(lang: &BenchmarkLanguage) -> RGBColor {
     match lang {
         BenchmarkLanguage::Scc => BLACK,
+        BenchmarkLanguage::SccLin => GREEN,
         BenchmarkLanguage::OCaml => RGBColor(242, 145, 00),
-        BenchmarkLanguage::Effekt => RGBColor(66, 36, 70),
         BenchmarkLanguage::Koka => RGBColor(27, 66, 83),
         BenchmarkLanguage::Rust => RGBColor(143, 30, 28),
         BenchmarkLanguage::SmlNj => RGBColor(143, 143, 143),
