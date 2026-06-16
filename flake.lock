@@ -1,25 +1,5 @@
 {
   "nodes": {
-    "effekt": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs",
-        "sbt-derivation": "sbt-derivation"
-      },
-      "locked": {
-        "lastModified": 1756897683,
-        "narHash": "sha256-TVFvTWrymHyIPn9roxfWD+v4b9OQvZbQ1DPToDz8BHI=",
-        "owner": "MarcoTz",
-        "repo": "effekt-nix",
-        "rev": "5f5242c64d5edf5bc3b88833ba002f7f5a40cd94",
-        "type": "github"
-      },
-      "original": {
-        "owner": "MarcoTz",
-        "repo": "effekt-nix",
-        "type": "github"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -76,11 +56,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1756819007,
-        "narHash": "sha256-12V64nKG/O/guxSYnr5/nq1EfqwJCdD2+cIGmhz3nrE=",
+        "lastModified": 1756911493,
+        "narHash": "sha256-6n/n1GZQ/vi+LhFXMSyoseKdNfc2QQaSBXJdgamrbkE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "aaff8c16d7fc04991cac6245bee1baa31f72b1e1",
+        "rev": "c6a788f552b7b7af703b1a29802a7233c0067908",
         "type": "github"
       },
       "original": {
@@ -92,11 +72,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1756911493,
-        "narHash": "sha256-6n/n1GZQ/vi+LhFXMSyoseKdNfc2QQaSBXJdgamrbkE=",
+        "lastModified": 1756819007,
+        "narHash": "sha256-12V64nKG/O/guxSYnr5/nq1EfqwJCdD2+cIGmhz3nrE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c6a788f552b7b7af703b1a29802a7233c0067908",
+        "rev": "aaff8c16d7fc04991cac6245bee1baa31f72b1e1",
         "type": "github"
       },
       "original": {
@@ -124,54 +104,49 @@
     },
     "root": {
       "inputs": {
-        "effekt": "effekt",
-        "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_2",
-        "scc": "scc"
-      }
-    },
-    "sbt-derivation": {
-      "inputs": {
-        "flake-utils": [
-          "effekt",
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "effekt",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1698464090,
-        "narHash": "sha256-Pnej7WZIPomYWg8f/CZ65sfW85IfIUjYhphMMg7/LT0=",
-        "owner": "zaninime",
-        "repo": "sbt-derivation",
-        "rev": "6762cf2c31de50efd9ff905cbcc87239995a4ef9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "zaninime",
-        "repo": "sbt-derivation",
-        "type": "github"
+        "flake-utils": "flake-utils",
+        "nixpkgs": "nixpkgs",
+        "scc": "scc",
+        "scc-lin": "scc-lin"
       }
     },
     "scc": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1776961065,
+        "narHash": "sha256-u50BgihwJoUpRQi/824MYlfGA86RdIuQc4N4StY4zGg=",
+        "owner": "SequentCalculus",
+        "repo": "sequent-calculus-compiler",
+        "rev": "a435006ad97f357442b205445116e2b225001d13",
+        "type": "github"
+      },
+      "original": {
+        "owner": "SequentCalculus",
+        "repo": "sequent-calculus-compiler",
+        "type": "github"
+      }
+    },
+    "scc-lin": {
       "inputs": {
         "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1757091078,
-        "narHash": "sha256-Z0NpQvdwRulKr+F6E4U3Yfjur+Mc4zBAclRbaIsboM4=",
-        "ref": "refs/heads/main",
-        "rev": "17d7b370526120071fe0da73d76d344ecdc8cc5c",
-        "revCount": 615,
-        "type": "git",
-        "url": "ssh://git@github.com/SequentCalculus/sequent-calculus-compiler"
+        "lastModified": 1781526427,
+        "narHash": "sha256-QCf2GoHFipH7hLGh/1iHkKRTLRlep1eA4pOjmlC6hW8=",
+        "owner": "SequentCalculus",
+        "repo": "sequent-calculus-compiler",
+        "rev": "d64e3f55cd25b80decccc258e3ac78477c27b63b",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/SequentCalculus/sequent-calculus-compiler"
+        "owner": "SequentCalculus",
+        "ref": "linear-continuations",
+        "repo": "sequent-calculus-compiler",
+        "type": "github"
       }
     },
     "systems": {
