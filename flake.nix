@@ -4,21 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    #effekt.url = "github:jiribenes/effekt-nix";
-    effekt.url = "github:MarcoTz/effekt-nix";
-    scc = {
-      url =
-        "git+ssh://git@github.com/SequentCalculus/sequent-calculus-compiler";
-    };
+    scc.url = "github:SequentCalculus/sequent-calculus-compiler";
+    scc-lin.url = "github:SequentCalculus/sequent-calculus-compiler/linear-continuations";
   };
 
-  outputs = { self, nixpkgs, flake-utils, effekt, scc, ... }:
+  outputs = { self, nixpkgs, flake-utils, scc, scc-lin, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        effekt-lib = effekt.lib.${system};
-        effektBackends = with effekt-lib.effektBackends; [ llvm ];
-        effektBuild = effekt-lib.getEffekt { backends = effektBackends; };
         rustPlatform = pkgs.rustPlatform;
         dependencies = [
           #compilers
@@ -26,8 +19,9 @@
           pkgs.koka
           pkgs.smlnj
           pkgs.mlton
-          effektBuild
           scc.packages.${system}.default
+          (pkgs.writeShellScriptBin "scc-lin"
+            ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
           pkgs.rustc
 
           #required by rustc
@@ -64,6 +58,11 @@
       devShells = {
         sccShell = pkgs.mkShell {
           buildInputs = [ self.packages.${system}.default ];
+          packages = [
+            scc.packages.${system}.default
+            (pkgs.writeShellScriptBin "scc-lin"
+              ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
+          ];
 
           shellHook = ''
             export name=""
