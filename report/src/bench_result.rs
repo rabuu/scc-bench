@@ -122,8 +122,9 @@ impl BenchResult {
                 .ok_or(Error::wrong_format_command(command))?
                 .split_once("_")
             {
-                None => BenchmarkLanguage::Scc,
+                Some((_, "main")) => BenchmarkLanguage::Scc,
                 Some((_, suffix)) => BenchmarkLanguage::from_suffix(suffix)?,
+                _ => panic!(),
             };
 
             data_all.push(BenchData::new(data, lang, path)?);
