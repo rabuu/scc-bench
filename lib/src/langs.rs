@@ -8,11 +8,11 @@ use std::{fmt, path::PathBuf, process::Command, str::FromStr};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BenchmarkLanguage {
     Scc,
+    SccLin,
     Rust,
     SmlMlton,
     SmlNj,
     OCaml,
-    Effekt,
     Koka,
 }
 
@@ -20,11 +20,11 @@ impl BenchmarkLanguage {
     pub fn all() -> [BenchmarkLanguage; 7] {
         [
             BenchmarkLanguage::Scc,
+            BenchmarkLanguage::SccLin,
             BenchmarkLanguage::Rust,
             BenchmarkLanguage::SmlMlton,
             BenchmarkLanguage::SmlNj,
             BenchmarkLanguage::OCaml,
-            BenchmarkLanguage::Effekt,
             BenchmarkLanguage::Koka,
         ]
     }
@@ -32,11 +32,11 @@ impl BenchmarkLanguage {
     pub fn from_ext(ext: &str) -> Option<BenchmarkLanguage> {
         match ext {
             "sc" => Some(BenchmarkLanguage::Scc),
+            "lin" => Some(BenchmarkLanguage::SccLin),
             "rs" => Some(BenchmarkLanguage::Rust),
             "mlb" => Some(BenchmarkLanguage::SmlMlton),
             "cm" => Some(BenchmarkLanguage::SmlNj),
             "ml" => Some(BenchmarkLanguage::OCaml),
-            "effekt" => Some(BenchmarkLanguage::Effekt),
             "kk" => Some(BenchmarkLanguage::Koka),
             _ => None,
         }
@@ -45,11 +45,11 @@ impl BenchmarkLanguage {
     pub fn ext(&self) -> &str {
         match self {
             BenchmarkLanguage::Scc => "sc",
+            BenchmarkLanguage::SccLin => "lin",
             BenchmarkLanguage::Rust => "rs",
             BenchmarkLanguage::SmlNj => "cm",
             BenchmarkLanguage::SmlMlton => "mlb",
             BenchmarkLanguage::OCaml => "ml",
-            BenchmarkLanguage::Effekt => "effekt",
             BenchmarkLanguage::Koka => "kk",
         }
     }
@@ -57,11 +57,11 @@ impl BenchmarkLanguage {
     pub fn suffix(&self) -> &str {
         match self {
             BenchmarkLanguage::Scc => "scc",
+            BenchmarkLanguage::SccLin => "lin",
             BenchmarkLanguage::Rust => "rust",
             BenchmarkLanguage::SmlNj => "smlnj",
             BenchmarkLanguage::SmlMlton => "mlton",
             BenchmarkLanguage::OCaml => "ocaml",
-            BenchmarkLanguage::Effekt => "effekt",
             BenchmarkLanguage::Koka => "koka",
         }
     }
@@ -69,11 +69,11 @@ impl BenchmarkLanguage {
     pub fn from_suffix(s: &str) -> Result<BenchmarkLanguage, Error> {
         match s.to_lowercase().trim() {
             "scc" => Ok(BenchmarkLanguage::Scc),
+            "lin" => Ok(BenchmarkLanguage::SccLin),
             "rust" => Ok(BenchmarkLanguage::Rust),
             "smlnj" => Ok(BenchmarkLanguage::SmlNj),
             "mlton" => Ok(BenchmarkLanguage::SmlMlton),
             "ocaml" => Ok(BenchmarkLanguage::OCaml),
-            "effekt" => Ok(BenchmarkLanguage::Effekt),
             "koka" => Ok(BenchmarkLanguage::Koka),
             _ => Err(Error::unknown_lang("read from suffix", s)),
         }
@@ -95,6 +95,20 @@ impl BenchmarkLanguage {
         match self {
             BenchmarkLanguage::Scc => {
                 let mut cmd = Command::new("scc");
+                cmd.arg("codegen");
+                cmd.arg(source_file);
+                #[cfg(target_arch = "x86_64")]
+                cmd.arg("x86-64");
+                #[cfg(target_arch = "aarch64")]
+                cmd.arg("aarch64");
+                if let Some(hs) = heap_size {
+                    cmd.arg("--heap-size");
+                    cmd.arg(format!("{hs}"));
+                }
+                cmd
+            }
+            BenchmarkLanguage::SccLin => {
+                let mut cmd = Command::new("scc-lin");
                 cmd.arg("codegen");
                 cmd.arg(source_file);
                 #[cfg(target_arch = "x86_64")]
@@ -140,16 +154,6 @@ impl BenchmarkLanguage {
                 cmd.arg(out_path);
                 cmd
             }
-            BenchmarkLanguage::Effekt => {
-                let mut cmd = Command::new("effekt");
-                cmd.arg(source_file);
-                cmd.arg("-b");
-                cmd.arg("--backend");
-                cmd.arg("llvm");
-                cmd.arg("-o");
-                cmd.arg(out_path);
-                cmd
-            }
             BenchmarkLanguage::Koka => {
                 let source_base = source_file
                     .file_name()
@@ -176,11 +180,11 @@ impl fmt::Display for BenchmarkLanguage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             BenchmarkLanguage::Scc => f.write_str("Compiling-SC"),
+            BenchmarkLanguage::SccLin => f.write_str("Compiling-SC-Lin"),
             BenchmarkLanguage::Rust => f.write_str("Rust"),
             BenchmarkLanguage::SmlNj => f.write_str("SML/NJ"),
             BenchmarkLanguage::SmlMlton => f.write_str("MLton"),
             BenchmarkLanguage::OCaml => f.write_str("OCaml"),
-            BenchmarkLanguage::Effekt => f.write_str("Effekt"),
             BenchmarkLanguage::Koka => f.write_str("Koka"),
         }
     }
@@ -191,11 +195,11 @@ impl FromStr for BenchmarkLanguage {
     fn from_str(s: &str) -> Result<BenchmarkLanguage, Self::Err> {
         match s.to_lowercase().trim() {
             "scc" => Ok(BenchmarkLanguage::Scc),
+            "scc-lin" => Ok(BenchmarkLanguage::SccLin),
             "rust" => Ok(BenchmarkLanguage::Rust),
             "smlnj" => Ok(BenchmarkLanguage::SmlNj),
             "ocaml" => Ok(BenchmarkLanguage::OCaml),
             "mlton" => Ok(BenchmarkLanguage::SmlMlton),
-            "effekt" => Ok(BenchmarkLanguage::Effekt),
             "koka" => Ok(BenchmarkLanguage::Koka),
             _ => Err(Error::unknown_lang("Parse Language Name", s)),
         }
