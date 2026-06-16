@@ -67,15 +67,11 @@ impl Benchmark {
             .map_err(|_| Error::path_access(&PathBuf::from(&bin_path), "create bin path"))?;
         let mut bin_name = self.name.clone();
 
-        if *lang != BenchmarkLanguage::Scc {
+        if !matches!(lang, BenchmarkLanguage::Scc | BenchmarkLanguage::SccLin) {
             bin_name += "_";
             bin_name += lang.suffix();
         }
-        let bin_path = if *lang == BenchmarkLanguage::Effekt {
-            bin_path.join(bin_name).join(&self.name)
-        } else {
-            bin_path.join(bin_name)
-        };
+        let bin_path = bin_path.join(bin_name);
 
         Ok(bin_path)
     }
@@ -122,20 +118,59 @@ impl Benchmark {
             str::from_utf8(&out.stdout).unwrap_or(""),
             str::from_utf8(&out.stderr).unwrap_or(""),
         ))?;
-        // for Koka, we have to make the generated binary executable
-        if let BenchmarkLanguage::Koka = lang {
-            let bin_path = self.bin_path(lang)?;
+        match lang {
+            BenchmarkLanguage::Scc => {
+                let bin_path = self.bin_path(lang)?;
+                let mut new_path = bin_path.clone();
+                let filename = bin_path.file_name().unwrap().to_string_lossy();
+                let filename = format!("{filename}_main");
 
-            let mut cmd = Command::new("chmod");
-            cmd.arg("+x");
-            cmd.arg(bin_path.clone());
+                new_path.set_file_name(filename);
 
-            cmd.status()
-                .map_err(|err| Error::file_access(&bin_path, "Change file permissions", err))?
-                .success()
-                .then_some(())
-                .ok_or(Error::path_access(&bin_path, "Change file permissions"))?
-        };
+                let mut cmd = Command::new("mv");
+                cmd.arg(bin_path.clone());
+                cmd.arg(new_path);
+
+                cmd.status()
+                    .map_err(|err| Error::file_access(&bin_path, "Move file", err))?
+                    .success()
+                    .then_some(())
+                    .ok_or(Error::path_access(&bin_path, "Move file"))?
+            }
+            BenchmarkLanguage::SccLin => {
+                let bin_path = self.bin_path(lang)?;
+                let mut new_path = bin_path.clone();
+                let filename = bin_path.file_name().unwrap().to_string_lossy();
+                let filename = format!("{filename}_lin");
+
+                new_path.set_file_name(filename);
+
+                let mut cmd = Command::new("mv");
+                cmd.arg(bin_path.clone());
+                cmd.arg(new_path);
+
+                cmd.status()
+                    .map_err(|err| Error::file_access(&bin_path, "Move file", err))?
+                    .success()
+                    .then_some(())
+                    .ok_or(Error::path_access(&bin_path, "Move file"))?
+            }
+            // for Koka, we have to make the generated binary executable
+            BenchmarkLanguage::Koka => {
+                let bin_path = self.bin_path(lang)?;
+
+                let mut cmd = Command::new("chmod");
+                cmd.arg("+x");
+                cmd.arg(bin_path.clone());
+
+                cmd.status()
+                    .map_err(|err| Error::file_access(&bin_path, "Change file permissions", err))?
+                    .success()
+                    .then_some(())
+                    .ok_or(Error::path_access(&bin_path, "Change file permissions"))?
+            }
+            _ => (),
+        }
         Ok(())
     }
 
@@ -150,13 +185,32 @@ impl Benchmark {
 
     pub fn run_cmd(&self, lang: &BenchmarkLanguage) -> Result<Command, Error> {
         let bin_path = self.bin_path(lang)?;
-        if *lang == BenchmarkLanguage::SmlNj {
-            let mut cmd = Command::new("sml");
-            cmd.arg("@SMLload");
-            cmd.arg(bin_path);
-            Ok(cmd)
-        } else {
-            Ok(Command::new(bin_path))
+        match lang {
+            BenchmarkLanguage::Scc => {
+                let mut new_path = bin_path.clone();
+                let filename = bin_path.file_name().unwrap().to_string_lossy();
+                let filename = format!("{filename}_main");
+
+                new_path.set_file_name(filename);
+
+                Ok(Command::new(new_path))
+            }
+            BenchmarkLanguage::SccLin => {
+                let mut new_path = bin_path.clone();
+                let filename = bin_path.file_name().unwrap().to_string_lossy();
+                let filename = format!("{filename}_lin");
+
+                new_path.set_file_name(filename);
+
+                Ok(Command::new(new_path))
+            }
+            BenchmarkLanguage::SmlNj => {
+                let mut cmd = Command::new("sml");
+                cmd.arg("@SMLload");
+                cmd.arg(bin_path);
+                Ok(cmd)
+            }
+            _ => Ok(Command::new(bin_path)),
         }
     }
 
@@ -194,10 +248,11 @@ impl Benchmark {
             let path_err = Error::path_access(&bin_path, "Path as String");
 
             let bin_str = bin_path.to_str().ok_or(path_err)?.to_owned();
-            let mut call_str = if *lang == BenchmarkLanguage::SmlNj {
-                format!("sml @SMLload {bin_str}")
-            } else {
-                bin_str
+            let mut call_str = match lang {
+                BenchmarkLanguage::Scc => format!("{bin_str}_main"),
+                BenchmarkLanguage::SccLin => format!("{bin_str}_lin"),
+                BenchmarkLanguage::SmlNj => format!("sml @SMLload {bin_str}"),
+                _ => bin_str,
             };
             for arg in &self.config.args {
                 call_str.push(' ');
