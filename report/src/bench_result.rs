@@ -60,6 +60,16 @@ impl BenchResult {
             if lang == BenchmarkLanguage::Scc {
                 continue;
             }
+            if matches!(
+                lang,
+                BenchmarkLanguage::Rust
+                    | BenchmarkLanguage::Koka
+                    | BenchmarkLanguage::SmlNj
+                    | BenchmarkLanguage::SmlMlton
+                    | BenchmarkLanguage::OCaml
+            ) {
+                continue;
+            }
             let lang_results = data
                 .iter()
                 .filter_map(|res| {
@@ -145,6 +155,14 @@ impl BenchResult {
         for lang in BenchmarkLanguage::all() {
             if lang == BenchmarkLanguage::Scc
                 || data.iter().find(|datum| datum.lang == lang).is_some()
+                || matches!(
+                    lang,
+                    BenchmarkLanguage::Rust
+                        | BenchmarkLanguage::Koka
+                        | BenchmarkLanguage::SmlNj
+                        | BenchmarkLanguage::SmlMlton
+                        | BenchmarkLanguage::OCaml
+                )
             {
                 continue;
             }
