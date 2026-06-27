@@ -13,6 +13,15 @@
       let
         pkgs = import nixpkgs { inherit system; };
         rustPlatform = pkgs.rustPlatform;
+        python = pkgs.python312.withPackages (ps: with ps; [
+          polars
+          pandas
+          pyarrow
+          numpy
+          plotly
+          kaleido
+          matplotlib
+        ]);
         dependencies = [
           #compilers
           pkgs.ocaml
@@ -37,6 +46,8 @@
           #hyperfine
           pkgs.hyperfine
           pkgs.bash
+
+          python
         ];
       in {
         packages = {
@@ -58,35 +69,7 @@
       devShells = {
         sccShell = pkgs.mkShell {
           buildInputs = [ self.packages.${system}.default ];
-          packages = [
-            #compilers
-            pkgs.ocaml
-            pkgs.koka
-            pkgs.smlnj
-            pkgs.mlton
-            scc.packages.${system}.default
-            (pkgs.writeShellScriptBin "scc-lin"
-              ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
-            pkgs.rustc
-
-            #required by rustc
-            pkgs.gcc
-            #required by ocaml (on MacOS)
-            pkgs.clang
-            #required by smlnj
-            pkgs.gnugrep
-            pkgs.gnused
-            #required by mlton
-            pkgs.coreutils
-
-            #hyperfine
-            pkgs.hyperfine
-            pkgs.bash
-
-            # plots
-            pkgs.pkg-config
-            pkgs.fontconfig
-          ];
+          packages = dependencies;
 
           shellHook = ''
             export name=""
