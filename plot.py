@@ -52,8 +52,16 @@ summary = (
 
 print(summary)
 
+plot_df = (
+    df
+    .join(
+        speedup_table.select(["benchmark", "speedup"]),
+        on="benchmark",
+    )
+)
+
 fig = px.bar(
-    df.to_pandas(),
+    plot_df.to_pandas(),
     x="benchmark",
     y="mean",
     color="variant",
@@ -64,9 +72,16 @@ fig = px.bar(
         "variant": ["main", "lin"],
     },
     labels={
-        "mean": "Mean runtime (s)",
+        "mean": "Mean runtime",
         "benchmark": "Benchmark",
         "variant": "Variant",
+    },
+    hover_data={
+        "benchmark": True,
+        "variant": True,
+        "mean": ":.4f",
+        "stddev": ":.4f",
+        "speedup": ":.2f",
     },
     title="Benchmark Comparison",
 )
