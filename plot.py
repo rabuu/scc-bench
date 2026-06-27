@@ -92,3 +92,4 @@ fig.update_layout(
 )
 
 fig.show()
+# fig.write_html("benchmark-speedup.html", include_plotlyjs="cdn")
