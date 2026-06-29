@@ -83,7 +83,7 @@ fig = px.bar(
         "stddev": ":.4f",
         "speedup": ":.2f",
     },
-    title="Benchmark Comparison",
+    title="Performance Comparison",
 )
 
 fig.update_layout(
@@ -92,4 +92,4 @@ fig.update_layout(
 )
 
 fig.show()
-# fig.write_html("benchmark-speedup.html", include_plotlyjs="cdn")
+# fig.write_html("benchmark-performance.html", include_plotlyjs="cdn")
