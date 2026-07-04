@@ -24,11 +24,6 @@ fn lang_color(lang: &BenchmarkLanguage) -> RGBColor {
     match lang {
         BenchmarkLanguage::Scc => BLACK,
         BenchmarkLanguage::SccLin => GREEN,
-        BenchmarkLanguage::OCaml => RGBColor(242, 145, 00),
-        BenchmarkLanguage::Koka => RGBColor(27, 66, 83),
-        BenchmarkLanguage::Rust => RGBColor(143, 30, 28),
-        BenchmarkLanguage::SmlNj => RGBColor(143, 143, 143),
-        BenchmarkLanguage::SmlMlton => RGBColor(37, 177, 228),
     }
 }
 
