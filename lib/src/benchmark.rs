@@ -155,21 +155,6 @@ impl Benchmark {
                     .then_some(())
                     .ok_or(Error::path_access(&bin_path, "Move file"))?
             }
-            // for Koka, we have to make the generated binary executable
-            BenchmarkLanguage::Koka => {
-                let bin_path = self.bin_path(lang)?;
-
-                let mut cmd = Command::new("chmod");
-                cmd.arg("+x");
-                cmd.arg(bin_path.clone());
-
-                cmd.status()
-                    .map_err(|err| Error::file_access(&bin_path, "Change file permissions", err))?
-                    .success()
-                    .then_some(())
-                    .ok_or(Error::path_access(&bin_path, "Change file permissions"))?
-            }
-            _ => (),
         }
         Ok(())
     }
@@ -204,13 +189,6 @@ impl Benchmark {
 
                 Ok(Command::new(new_path))
             }
-            BenchmarkLanguage::SmlNj => {
-                let mut cmd = Command::new("sml");
-                cmd.arg("@SMLload");
-                cmd.arg(bin_path);
-                Ok(cmd)
-            }
-            _ => Ok(Command::new(bin_path)),
         }
     }
 
@@ -251,8 +229,6 @@ impl Benchmark {
             let mut call_str = match lang {
                 BenchmarkLanguage::Scc => format!("{bin_str}_main"),
                 BenchmarkLanguage::SccLin => format!("{bin_str}_lin"),
-                BenchmarkLanguage::SmlNj => format!("sml @SMLload {bin_str}"),
-                _ => bin_str,
             };
             for arg in &self.config.args {
                 call_str.push(' ');
