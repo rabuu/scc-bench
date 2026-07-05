@@ -98,15 +98,18 @@ plt.barh(
 speedups = speedup_table["speedup"].to_list()
 
 for i, s in enumerate(speedups):
+    x_pos = max(main_means[i], lin_means[i]) + 0.02
+
     plt.text(
-        max(max(main_means), max(lin_means)) * 1.05,
+        x_pos,
         y[i],
         f"{s:.2f}×",
         va="center",
-        fontsize=8
+        fontsize=8,
+        fontweight="bold",
     )
 
-    plt.margins(x=0.1)
+plt.margins(x=0.1)
 
 plt.yticks(y, benchmarks, fontsize=8)
 plt.xlabel("Mean runtime (s)")
