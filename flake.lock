@@ -56,11 +56,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1756911493,
-        "narHash": "sha256-6n/n1GZQ/vi+LhFXMSyoseKdNfc2QQaSBXJdgamrbkE=",
+        "lastModified": 1782978903,
+        "narHash": "sha256-bG1LAS3YehMzp4RSXw99o3yMEO/Ktb0Tx29RCtEU0Tk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c6a788f552b7b7af703b1a29802a7233c0067908",
+        "rev": "d33369954a67ae3322177dc9a3d564092912120c",
         "type": "github"
       },
       "original": {
@@ -135,11 +135,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1781526427,
-        "narHash": "sha256-QCf2GoHFipH7hLGh/1iHkKRTLRlep1eA4pOjmlC6hW8=",
+        "lastModified": 1782571191,
+        "narHash": "sha256-KtFMZAy4WZ97jDw3qNP4I24Kq8NEb2IRFaxIHLIHen8=",
         "owner": "SequentCalculus",
         "repo": "sequent-calculus-compiler",
-        "rev": "d64e3f55cd25b80decccc258e3ac78477c27b63b",
+        "rev": "083e60c28817ee421341fe91534ad213030c85d9",
         "type": "github"
       },
       "original": {
