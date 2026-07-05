@@ -127,15 +127,15 @@ impl Benchmark {
 
                 new_path.set_file_name(filename);
 
-                let mut cmd = Command::new("mv");
+                let mut cmd = Command::new("/bin/mv");
                 cmd.arg(bin_path.clone());
                 cmd.arg(new_path);
 
                 cmd.status()
-                    .map_err(|err| Error::file_access(&bin_path, "Move file", err))?
+                    .map_err(|err| Error::file_access(&bin_path, "move", err))?
                     .success()
                     .then_some(())
-                    .ok_or(Error::path_access(&bin_path, "Move file"))?
+                    .ok_or(Error::path_access(&bin_path, "move file"))?
             }
             BenchmarkLanguage::SccLin => {
                 let bin_path = self.bin_path(lang)?;
@@ -145,15 +145,15 @@ impl Benchmark {
 
                 new_path.set_file_name(filename);
 
-                let mut cmd = Command::new("mv");
+                let mut cmd = Command::new("/bin/mv");
                 cmd.arg(bin_path.clone());
                 cmd.arg(new_path);
 
                 cmd.status()
-                    .map_err(|err| Error::file_access(&bin_path, "Move file", err))?
+                    .map_err(|err| Error::file_access(&bin_path, "move", err))?
                     .success()
                     .then_some(())
-                    .ok_or(Error::path_access(&bin_path, "Move file"))?
+                    .ok_or(Error::path_access(&bin_path, "move"))?
             }
         }
         Ok(())

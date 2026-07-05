@@ -24,24 +24,12 @@
         ]);
         dependencies = [
           #compilers
-          pkgs.ocaml
-          pkgs.koka
-          pkgs.smlnj
-          pkgs.mlton
           scc.packages.${system}.default
           (pkgs.writeShellScriptBin "scc-lin"
             ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
-          pkgs.rustc
 
           #required by rustc
           pkgs.gcc
-          #required by ocaml (on MacOS)
-          pkgs.clang
-          #required by smlnj
-          pkgs.gnugrep
-          pkgs.gnused
-          #required by mlton
-          pkgs.coreutils
 
           #hyperfine
           pkgs.hyperfine
