@@ -1,8 +1,23 @@
 from pathlib import Path
 import polars as pl
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+# SVG config
+mpl.rcParams.update({
+    "font.size": 13,
+    "axes.titlesize": 15,
+    "axes.labelsize": 15,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 15,
+    "legend.fontsize": 15,
+    "figure.dpi": 150,
+    "savefig.dpi": 300,
+    "font.family": "Libertinus Sans",
+    "svg.fonttype": "none",  # IMPORTANT: keeps text as text in SVG (best for Typst)
+})
 
 rows = []
 
@@ -97,21 +112,22 @@ plt.barh(
 
 speedups = speedup_table["speedup"].to_list()
 
+global_max = max(main_means + lin_means)
+x_offset = global_max * 0.03
+
 for i, s in enumerate(speedups):
-    x_pos = max(main_means[i], lin_means[i]) + 0.02
+    x_pos = max(main_means[i], lin_means[i]) + x_offset
 
     plt.text(
         x_pos,
         y[i],
         f"{s:.2f}×",
         va="center",
-        fontsize=8,
         fontweight="bold",
+        color="black",
     )
 
-plt.margins(x=0.1)
-
-plt.yticks(y, benchmarks, fontsize=8)
+plt.yticks(y, benchmarks)
 plt.xlabel("Mean runtime (s)")
 
 plt.gca().invert_yaxis()
@@ -122,5 +138,9 @@ plt.legend(frameon=False, loc="lower right")
 plt.grid(axis="x", linestyle="--", alpha=0.3)
 plt.tick_params(axis='y', pad=6)
 
+plt.margins(x=0.12, y=0.03)
+
 plt.tight_layout()
+
+plt.savefig("runtime.svg", bbox_inches="tight")
 plt.show()
