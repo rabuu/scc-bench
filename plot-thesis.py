@@ -54,6 +54,29 @@ speedup_table = (
     .sort("speedup", descending=True)
 )
 
+results = (
+    df
+    .pivot(
+        values=["mean", "stddev"],
+        index="benchmark",
+        on="variant",
+    )
+    .with_columns(
+        (pl.col("mean_main") / pl.col("mean_lin")).alias("speedup")
+    )
+    .sort("benchmark")
+)
+
+for row in results.iter_rows(named=True):
+    print(
+        f"`{row['benchmark']}`, "
+        f"[{row['mean_main']:.5f}s], "
+        f"[{row['stddev_main']:.5f}s], "
+        f"[{row['mean_lin']:.5f}s], "
+        f"[{row['stddev_lin']:.5f}s], "
+        f"[{row['speedup']:.3f}],"
+    )
+
 plot_df = (
     df
     .join(
