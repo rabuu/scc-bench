@@ -128,7 +128,7 @@ for i, s in enumerate(speedups):
     )
 
 plt.yticks(y, benchmarks)
-plt.xlabel("Mean runtime (s)")
+plt.xlabel("Mean execution time (s)")
 
 plt.gca().invert_yaxis()
 plt.gca().spines["top"].set_visible(False)
