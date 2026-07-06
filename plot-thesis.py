@@ -94,7 +94,7 @@ plt.barh(
     main_means,
     height=bar_h,
     color="steelblue",
-    label="without optimization",
+    label="baseline",
     xerr=main_err,
     capsize=2
 )
@@ -105,7 +105,7 @@ plt.barh(
     lin_means,
     height=bar_h,
     color="indianred",
-    label="with optimization",
+    label="optimized",
     xerr=lin_err,
     capsize=2
 )
