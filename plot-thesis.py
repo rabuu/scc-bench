@@ -77,6 +77,16 @@ for row in results.iter_rows(named=True):
         f"[{row['speedup']:.3f}],"
     )
 
+geomean_speedup = (
+    results
+    .select(
+        pl.col("speedup").log().mean().exp().alias("geomean_speedup")
+    )
+    .item()
+)
+
+print(f"\nGeometric mean speedup: {geomean_speedup:.3f}×")
+
 plot_df = (
     df
     .join(
