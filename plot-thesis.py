@@ -7,7 +7,7 @@ import matplotlib as mpl
 
 # SVG config
 mpl.rcParams.update({
-    "font.size": 13,
+    "font.size": 15,
     "axes.titlesize": 15,
     "axes.labelsize": 15,
     "xtick.labelsize": 13,
@@ -126,7 +126,7 @@ plt.barh(
     y - bar_h/2,
     main_means,
     height=bar_h,
-    color="steelblue",
+    color="#D0021B",
     label="baseline",
     xerr=main_err,
     capsize=2
@@ -137,7 +137,7 @@ plt.barh(
     y + bar_h/2,
     lin_means,
     height=bar_h,
-    color="indianred",
+    color="#56B4E9",
     label="optimized",
     xerr=lin_err,
     capsize=2
