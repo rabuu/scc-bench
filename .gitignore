@@ -1,6 +1,7 @@
 /target
 /target_scc
 /target_scc-lin
+/target_scc-sf
 /results
 *.cmi
 *.cmo

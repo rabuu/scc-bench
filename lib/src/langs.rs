@@ -9,17 +9,23 @@ use std::{fmt, path::PathBuf, process::Command, str::FromStr};
 pub enum BenchmarkLanguage {
     Scc,
     SccLin,
+    SccSf,
 }
 
 impl BenchmarkLanguage {
-    pub fn all() -> [BenchmarkLanguage; 2] {
-        [BenchmarkLanguage::Scc, BenchmarkLanguage::SccLin]
+    pub fn all() -> [BenchmarkLanguage; 3] {
+        [
+            BenchmarkLanguage::Scc,
+            BenchmarkLanguage::SccLin,
+            BenchmarkLanguage::SccSf,
+        ]
     }
 
     pub fn from_ext(ext: &str) -> Option<BenchmarkLanguage> {
         match ext {
             "sc" => Some(BenchmarkLanguage::Scc),
             "lin" => Some(BenchmarkLanguage::SccLin),
+            "sf" => Some(BenchmarkLanguage::SccSf),
             _ => None,
         }
     }
@@ -28,6 +34,7 @@ impl BenchmarkLanguage {
         match self {
             BenchmarkLanguage::Scc => "sc",
             BenchmarkLanguage::SccLin => "lin",
+            BenchmarkLanguage::SccSf => "sf",
         }
     }
 
@@ -35,6 +42,7 @@ impl BenchmarkLanguage {
         match self {
             BenchmarkLanguage::Scc => "scc",
             BenchmarkLanguage::SccLin => "lin",
+            BenchmarkLanguage::SccSf => "sf",
         }
     }
 
@@ -42,6 +50,7 @@ impl BenchmarkLanguage {
         match s.to_lowercase().trim() {
             "scc" => Ok(BenchmarkLanguage::Scc),
             "lin" => Ok(BenchmarkLanguage::SccLin),
+            "sf" => Ok(BenchmarkLanguage::SccSf),
             _ => Err(Error::unknown_lang("read from suffix", s)),
         }
     }
@@ -50,6 +59,7 @@ impl BenchmarkLanguage {
         let compiler = match self {
             BenchmarkLanguage::Scc => "scc",
             BenchmarkLanguage::SccLin => "scc-lin",
+            BenchmarkLanguage::SccSf => "scc-sf",
         };
 
         let mut cmd = Command::new(compiler);
@@ -72,6 +82,7 @@ impl fmt::Display for BenchmarkLanguage {
         match self {
             BenchmarkLanguage::Scc => f.write_str("SCC"),
             BenchmarkLanguage::SccLin => f.write_str("SCC-Lin"),
+            BenchmarkLanguage::SccSf => f.write_str("SCC-Sf"),
         }
     }
 }
@@ -82,6 +93,7 @@ impl FromStr for BenchmarkLanguage {
         match s.to_lowercase().trim() {
             "scc" => Ok(BenchmarkLanguage::Scc),
             "scc-lin" => Ok(BenchmarkLanguage::SccLin),
+            "scc-sf" => Ok(BenchmarkLanguage::SccSf),
             _ => Err(Error::unknown_lang("Parse Language Name", s)),
         }
     }

@@ -5,7 +5,7 @@ use plotters::{
     chart::ChartBuilder,
     drawing::IntoDrawingArea,
     prelude::{IntoFont, IntoTextStyle, PathElement, Rectangle},
-    style::{BLACK, Color, GREEN, RED, RGBColor, WHITE},
+    style::{BLACK, BLUE, Color, GREEN, RED, RGBColor, WHITE},
 };
 use std::{fs::create_dir_all, path::PathBuf};
 
@@ -24,6 +24,7 @@ fn lang_color(lang: &BenchmarkLanguage) -> RGBColor {
     match lang {
         BenchmarkLanguage::Scc => BLACK,
         BenchmarkLanguage::SccLin => GREEN,
+        BenchmarkLanguage::SccSf => BLUE,
     }
 }
 

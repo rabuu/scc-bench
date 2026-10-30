@@ -67,7 +67,10 @@ impl Benchmark {
             .map_err(|_| Error::path_access(&PathBuf::from(&bin_path), "create bin path"))?;
         let mut bin_name = self.name.clone();
 
-        if !matches!(lang, BenchmarkLanguage::Scc | BenchmarkLanguage::SccLin) {
+        if !matches!(
+            lang,
+            BenchmarkLanguage::Scc | BenchmarkLanguage::SccLin | BenchmarkLanguage::SccSf
+        ) {
             bin_name += "_";
             bin_name += lang.suffix();
         }
@@ -155,6 +158,24 @@ impl Benchmark {
                     .then_some(())
                     .ok_or(Error::path_access(&bin_path, "move"))?
             }
+            BenchmarkLanguage::SccSf => {
+                let bin_path = self.bin_path(lang)?;
+                let mut new_path = bin_path.clone();
+                let filename = bin_path.file_name().unwrap().to_string_lossy();
+                let filename = format!("{filename}_sf");
+
+                new_path.set_file_name(filename);
+
+                let mut cmd = Command::new("/bin/mv");
+                cmd.arg(bin_path.clone());
+                cmd.arg(new_path);
+
+                cmd.status()
+                    .map_err(|err| Error::file_access(&bin_path, "move", err))?
+                    .success()
+                    .then_some(())
+                    .ok_or(Error::path_access(&bin_path, "move"))?
+            }
         }
         Ok(())
     }
@@ -184,6 +205,15 @@ impl Benchmark {
                 let mut new_path = bin_path.clone();
                 let filename = bin_path.file_name().unwrap().to_string_lossy();
                 let filename = format!("{filename}_lin");
+
+                new_path.set_file_name(filename);
+
+                Ok(Command::new(new_path))
+            }
+            BenchmarkLanguage::SccSf => {
+                let mut new_path = bin_path.clone();
+                let filename = bin_path.file_name().unwrap().to_string_lossy();
+                let filename = format!("{filename}_sf");
 
                 new_path.set_file_name(filename);
 
@@ -229,6 +259,7 @@ impl Benchmark {
             let mut call_str = match lang {
                 BenchmarkLanguage::Scc => format!("{bin_str}_main"),
                 BenchmarkLanguage::SccLin => format!("{bin_str}_lin"),
+                BenchmarkLanguage::SccSf => format!("{bin_str}_sf"),
             };
             for arg in &self.config.args {
                 call_str.push(' ');
