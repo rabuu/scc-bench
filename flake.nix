@@ -6,9 +6,10 @@
     flake-utils.url = "github:numtide/flake-utils";
     scc.url = "github:SequentCalculus/sequent-calculus-compiler";
     scc-lin.url = "github:SequentCalculus/sequent-calculus-compiler/linear-continuations";
+    scc-sf.url = "github:SequentCalculus/sequent-calculus-compiler/steadfast-axcut";
   };
 
-  outputs = { self, nixpkgs, flake-utils, scc, scc-lin, ... }:
+  outputs = { self, nixpkgs, flake-utils, scc, scc-lin, scc-sf, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -27,6 +28,8 @@
           scc.packages.${system}.default
           (pkgs.writeShellScriptBin "scc-lin"
             ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
+          (pkgs.writeShellScriptBin "scc-sf"
+            ''${scc-sf.packages.${system}.default}/bin/scc "$@"'')
 
           #required by rustc
           pkgs.gcc
