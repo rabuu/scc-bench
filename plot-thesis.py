@@ -1,6 +1,5 @@
 from pathlib import Path
 import polars as pl
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -31,6 +30,8 @@ for csv in Path("./results/raw").glob("*.csv"):
             pl.lit(benchmark).alias("benchmark"),
             pl.when(pl.col("command").str.contains("_lin"))
                 .then(pl.lit("lin"))
+                .when(pl.col("command").str.contains("_sf"))
+                .then(pl.lit("sf"))
                 .otherwise(pl.lit("main"))
                 .alias("variant")
         )
@@ -39,21 +40,9 @@ for csv in Path("./results/raw").glob("*.csv"):
     rows.append(df)
 
 df = pl.concat(rows)
-df = df.filter(~pl.col("benchmark").str.contains("Goto"))
+# df = df.filter(~pl.col("benchmark").str.contains("Goto"))
 
-speedup_table = (
-    df
-    .pivot(
-        values="mean",
-        index="benchmark",
-        on="variant",
-    )
-    .with_columns(
-        (pl.col("main") / pl.col("lin")).alias("speedup")
-    )
-    .sort("speedup", descending=True)
-)
-
+# Columns: benchmark, mean_{main,lin,sf}, stddev_{main,lin,sf}
 results = (
     df
     .pivot(
@@ -62,99 +51,93 @@ results = (
         on="variant",
     )
     .with_columns(
-        (pl.col("mean_main") / pl.col("mean_lin")).alias("speedup")
+        (pl.col("mean_main") / pl.col("mean_lin")).alias("speedup_lin"),
+        (pl.col("mean_main") / pl.col("mean_sf")).alias("speedup_sf"),
     )
-    .sort("benchmark")
 )
 
-for row in results.iter_rows(named=True):
+# Table output (alphabetical by benchmark)
+for row in results.sort("benchmark").iter_rows(named=True):
     print(
         f"`{row['benchmark']}`, "
         f"[{row['mean_main']:.5f}s], "
         f"[{row['stddev_main']:.5f}s], "
         f"[{row['mean_lin']:.5f}s], "
         f"[{row['stddev_lin']:.5f}s], "
-        f"[{row['speedup']:.3f}],"
+        f"[{row['speedup_lin']:.3f}], "
+        f"[{row['mean_sf']:.5f}s], "
+        f"[{row['stddev_sf']:.5f}s], "
+        f"[{row['speedup_sf']:.3f}],"
     )
 
-geomean_speedup = (
-    results
-    .select(
-        pl.col("speedup").log().mean().exp().alias("geomean_speedup")
-    )
-    .item()
-)
+geomeans = results.select(
+    pl.col("speedup_lin").log().mean().exp().alias("lin"),
+    pl.col("speedup_sf").log().mean().exp().alias("sf"),
+).row(0, named=True)
 
-print(f"\nGeometric mean speedup: {geomean_speedup:.3f}×")
+print(f"\nGeometric mean speedup (lin): {geomeans['lin']:.3f}×")
+print(f"Geometric mean speedup (sf):  {geomeans['sf']:.3f}×")
 
-plot_df = (
-    df
-    .join(
-        speedup_table.select(["benchmark", "speedup"]),
-        on="benchmark",
-    )
-)
+# Plot order: by improvement of sf over main
+plot_res = results.sort("speedup_sf", descending=True)
+benchmarks = plot_res.get_column("benchmark").to_list()
 
-pdf = plot_df.to_pandas()
-order = speedup_table.get_column("benchmark").to_list()
-pdf["benchmark"] = pd.Categorical(pdf["benchmark"], categories=order, ordered=True)
+main_means = plot_res["mean_main"].to_list()
+lin_means = plot_res["mean_lin"].to_list()
+sf_means = plot_res["mean_sf"].to_list()
 
-benchmarks = order
+main_err = plot_res["stddev_main"].to_list()
+lin_err = plot_res["stddev_lin"].to_list()
+sf_err = plot_res["stddev_sf"].to_list()
+
+speedups_lin = plot_res["speedup_lin"].to_list()
+speedups_sf = plot_res["speedup_sf"].to_list()
 
 spacing = 1.3
 y = np.arange(len(benchmarks)) * spacing
-bar_h = 0.35 * spacing
+bar_h = 0.26 * spacing
 
-main_means = []
-lin_means = []
-main_err = []
-lin_err = []
+plt.figure(figsize=(10, 14))
 
-for b in benchmarks:
-    sub = pdf[pdf["benchmark"] == b]
-
-    main_means.append(sub[sub["variant"] == "main"]["mean"].values[0])
-    lin_means.append(sub[sub["variant"] == "lin"]["mean"].values[0])
-
-    main_err.append(sub[sub["variant"] == "main"]["stddev"].values[0])
-    lin_err.append(sub[sub["variant"] == "lin"]["stddev"].values[0])
-
-plt.figure(figsize=(10, 12))
-
-# main (blue)
 plt.barh(
-    y - bar_h/2,
+    y - bar_h,
     main_means,
     height=bar_h,
     color="#D0021B",
     label="baseline",
     xerr=main_err,
-    capsize=2
+    capsize=2,
 )
 
-# lin (red)
 plt.barh(
-    y + bar_h/2,
+    y,
     lin_means,
     height=bar_h,
     color="#56B4E9",
-    label="optimized",
+    label="lin",
     xerr=lin_err,
-    capsize=2
+    capsize=2,
 )
 
-speedups = speedup_table["speedup"].to_list()
+plt.barh(
+    y + bar_h,
+    sf_means,
+    height=bar_h,
+    color="#fff600",
+    label="sf",
+    xerr=sf_err,
+    capsize=2,
+)
 
-global_max = max(main_means + lin_means)
+global_max = max(main_means + lin_means + sf_means)
 x_offset = global_max * 0.03
 
-for i, s in enumerate(speedups):
-    x_pos = max(main_means[i], lin_means[i]) + x_offset
-
+# Speedup (vs. baseline) next to the lin and sf bars
+for i in range(len(benchmarks)):
     plt.text(
-        x_pos,
-        y[i],
-        f"{s:.2f}×",
+        sf_means[i] + sf_err[i] + x_offset,
+        y[i] + bar_h,
+        f"{speedups_sf[i]:.2f}×",
         va="center",
         fontweight="bold",
         color="black",
@@ -169,7 +152,7 @@ plt.gca().spines["right"].set_visible(False)
 plt.legend(frameon=False, loc="lower right")
 
 plt.grid(axis="x", linestyle="--", alpha=0.3)
-plt.tick_params(axis='y', pad=6)
+plt.tick_params(axis="y", pad=6)
 
 plt.margins(x=0.12, y=0.03)
 
