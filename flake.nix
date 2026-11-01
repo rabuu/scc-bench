@@ -2,11 +2,20 @@
   description = "Run bash with all dependencies installed";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
-    scc.url = "github:SequentCalculus/sequent-calculus-compiler";
-    scc-lin.url = "github:SequentCalculus/sequent-calculus-compiler/linear-continuations";
-    scc-sf.url = "github:SequentCalculus/sequent-calculus-compiler/steadfast-axcut";
+    scc = {
+      url = "github:SequentCalculus/sequent-calculus-compiler";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    scc-lin = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/linear-continuations";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    scc-sf = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/steadfast-axcut";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, flake-utils, scc, scc-lin, scc-sf, ... }:
