@@ -1,4 +1,4 @@
-use super::langs::BenchmarkLanguage;
+use super::langs::BenchmarkCompiler;
 use std::{
     fmt,
     path::{Path, PathBuf},
@@ -38,7 +38,7 @@ pub enum Error {
         tried: String,
     },
     MissingData {
-        lang: BenchmarkLanguage,
+        lang: BenchmarkCompiler,
     },
     Compile {
         bench: String,
@@ -117,7 +117,7 @@ impl Error {
         }
     }
 
-    pub fn compile(name: &str, lang: &BenchmarkLanguage, stdout: &str, stderr: &str) -> Error {
+    pub fn compile(name: &str, lang: &BenchmarkCompiler, stdout: &str, stderr: &str) -> Error {
         Error::Compile {
             bench: name.to_owned(),
             lang: lang.to_string(),
@@ -126,7 +126,7 @@ impl Error {
         }
     }
 
-    pub fn run<T: fmt::Display>(name: &str, lang: &BenchmarkLanguage, err: T) -> Error {
+    pub fn run<T: fmt::Display>(name: &str, lang: &BenchmarkCompiler, err: T) -> Error {
         Error::Run {
             bench: name.to_owned(),
             lang: lang.to_string(),
@@ -162,7 +162,7 @@ impl Error {
         }
     }
 
-    pub fn missing_lang(lang: BenchmarkLanguage) -> Error {
+    pub fn missing_lang(lang: BenchmarkCompiler) -> Error {
         Error::MissingData { lang }
     }
 

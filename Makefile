@@ -21,10 +21,6 @@ else
 	ulimit -s $(stack_size) && cargo run -- -n $(name)
 endif
 
-.PHONY: plots
-plots:
-	cargo run -p report
-
 .PHONY: clean
 clean:
 	find -name "*.cmi" -delete

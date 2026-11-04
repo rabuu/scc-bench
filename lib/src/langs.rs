@@ -5,62 +5,46 @@ use super::{
 };
 use std::{fmt, path::PathBuf, process::Command, str::FromStr};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BenchmarkLanguage {
-    Scc,
-    SccLin,
-    SccSf,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BenchmarkCompiler {
+    suffix: String,
 }
 
-impl BenchmarkLanguage {
-    pub fn all() -> [BenchmarkLanguage; 3] {
-        [
-            BenchmarkLanguage::Scc,
-            BenchmarkLanguage::SccLin,
-            BenchmarkLanguage::SccSf,
+impl BenchmarkCompiler {
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self {
+                suffix: "sf".to_string(),
+            },
+            Self {
+                suffix: "lin".to_string(),
+            },
         ]
     }
 
-    pub fn from_ext(ext: &str) -> Option<BenchmarkLanguage> {
+    pub fn from_ext(ext: &str) -> Vec<BenchmarkCompiler> {
         match ext {
-            "sc" => Some(BenchmarkLanguage::Scc),
-            "lin" => Some(BenchmarkLanguage::SccLin),
-            "sf" => Some(BenchmarkLanguage::SccSf),
-            _ => None,
+            "sc" => Self::all(),
+            _ => vec![],
         }
     }
 
     pub fn ext(&self) -> &str {
-        match self {
-            BenchmarkLanguage::Scc => "sc",
-            BenchmarkLanguage::SccLin => "lin",
-            BenchmarkLanguage::SccSf => "sf",
-        }
+        "sc"
     }
 
     pub fn suffix(&self) -> &str {
-        match self {
-            BenchmarkLanguage::Scc => "scc",
-            BenchmarkLanguage::SccLin => "lin",
-            BenchmarkLanguage::SccSf => "sf",
-        }
+        &self.suffix
     }
 
-    pub fn from_suffix(s: &str) -> Result<BenchmarkLanguage, Error> {
-        match s.to_lowercase().trim() {
-            "scc" => Ok(BenchmarkLanguage::Scc),
-            "lin" => Ok(BenchmarkLanguage::SccLin),
-            "sf" => Ok(BenchmarkLanguage::SccSf),
-            _ => Err(Error::unknown_lang("read from suffix", s)),
+    pub fn from_suffix(s: &str) -> BenchmarkCompiler {
+        Self {
+            suffix: s.to_lowercase().trim().to_string(),
         }
     }
 
     pub fn compile_cmd(&self, source_file: &PathBuf, heap_size: Option<usize>) -> Command {
-        let compiler = match self {
-            BenchmarkLanguage::Scc => "scc",
-            BenchmarkLanguage::SccLin => "scc-lin",
-            BenchmarkLanguage::SccSf => "scc-sf",
-        };
+        let compiler = format!("scc-{}", self.suffix);
 
         let mut cmd = Command::new(compiler);
         cmd.arg("codegen");
@@ -77,23 +61,19 @@ impl BenchmarkLanguage {
     }
 }
 
-impl fmt::Display for BenchmarkLanguage {
+impl fmt::Display for BenchmarkCompiler {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BenchmarkLanguage::Scc => f.write_str("SCC"),
-            BenchmarkLanguage::SccLin => f.write_str("SCC-Lin"),
-            BenchmarkLanguage::SccSf => f.write_str("SCC-Sf"),
-        }
+        write!(f, "SCC-{}", self.suffix)
     }
 }
 
-impl FromStr for BenchmarkLanguage {
+impl FromStr for BenchmarkCompiler {
     type Err = Error;
-    fn from_str(s: &str) -> Result<BenchmarkLanguage, Self::Err> {
-        match s.to_lowercase().trim() {
-            "scc" => Ok(BenchmarkLanguage::Scc),
-            "scc-lin" => Ok(BenchmarkLanguage::SccLin),
-            "scc-sf" => Ok(BenchmarkLanguage::SccSf),
+    fn from_str(s: &str) -> Result<BenchmarkCompiler, Self::Err> {
+        match s.to_lowercase().trim().split_once('-') {
+            Some(("scc", suffix)) => Ok(BenchmarkCompiler {
+                suffix: suffix.to_string(),
+            }),
             _ => Err(Error::unknown_lang("Parse Language Name", s)),
         }
     }

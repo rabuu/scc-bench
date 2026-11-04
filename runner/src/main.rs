@@ -1,5 +1,5 @@
 use clap::Parser;
-use lib::{benchmark::Benchmark, errors::Error, langs::BenchmarkLanguage};
+use lib::{benchmark::Benchmark, errors::Error, langs::BenchmarkCompiler};
 use std::str;
 
 #[derive(clap::Parser)]
@@ -17,7 +17,7 @@ pub struct Args {
     exec: bool,
     /// Optional: Exclude language
     #[arg(long)]
-    exclude_language: Vec<BenchmarkLanguage>,
+    exclude_language: Vec<BenchmarkCompiler>,
     /// Optional: Exclude benchmark
     #[arg(long)]
     exclude_bench: Vec<String>,

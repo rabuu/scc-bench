@@ -2,7 +2,7 @@
 use super::{
     config::Config,
     errors::Error,
-    langs::BenchmarkLanguage,
+    langs::BenchmarkCompiler,
     paths::{PLOTS_PATH, RAW_PATH, SUITE_PATH, bin_path_aarch, bin_path_x86},
 };
 use std::{
@@ -15,12 +15,12 @@ use std::{
 pub struct Benchmark {
     pub name: String,
     pub base_path: PathBuf,
-    pub languages: Vec<BenchmarkLanguage>,
+    pub languages: Vec<BenchmarkCompiler>,
     pub config: Config,
 }
 
 impl Benchmark {
-    pub fn new(name: &str, exclude_lang: &[BenchmarkLanguage]) -> Result<Benchmark, Error> {
+    pub fn new(name: &str, exclude_lang: &[BenchmarkCompiler]) -> Result<Benchmark, Error> {
         let base_path = PathBuf::from(SUITE_PATH).join(name);
         let mut config_path = base_path.clone().join(name);
         config_path.set_extension("args");
@@ -43,7 +43,7 @@ impl Benchmark {
                 continue;
             }
 
-            if let Some(lang) = BenchmarkLanguage::from_ext(ext) {
+            for lang in BenchmarkCompiler::from_ext(ext) {
                 if !exclude_lang.contains(&lang) {
                     languages.push(lang);
                 }
@@ -57,7 +57,7 @@ impl Benchmark {
         })
     }
 
-    pub fn bin_path(&self, lang: &BenchmarkLanguage) -> Result<PathBuf, Error> {
+    pub fn bin_path(&self, lang: &BenchmarkCompiler) -> Result<PathBuf, Error> {
         #[cfg(target_arch = "x86_64")]
         let bin_path = bin_path_x86();
         #[cfg(target_arch = "aarch64")]
@@ -65,17 +65,8 @@ impl Benchmark {
 
         create_dir_all(&bin_path)
             .map_err(|_| Error::path_access(&PathBuf::from(&bin_path), "create bin path"))?;
-        let mut bin_name = self.name.clone();
-
-        if !matches!(
-            lang,
-            BenchmarkLanguage::Scc | BenchmarkLanguage::SccLin | BenchmarkLanguage::SccSf
-        ) {
-            bin_name += "_";
-            bin_name += lang.suffix();
-        }
+        let bin_name = self.name.clone();
         let bin_path = bin_path.join(bin_name);
-
         Ok(bin_path)
     }
 
@@ -102,7 +93,7 @@ impl Benchmark {
         Ok(())
     }
 
-    pub fn compile(&self, lang: &BenchmarkLanguage) -> Result<(), Error> {
+    pub fn compile(&self, lang: &BenchmarkCompiler) -> Result<(), Error> {
         if !self.languages.contains(lang) {
             return Err(Error::unknown_lang("Compiling", lang));
         }
@@ -121,62 +112,23 @@ impl Benchmark {
             str::from_utf8(&out.stdout).unwrap_or(""),
             str::from_utf8(&out.stderr).unwrap_or(""),
         ))?;
-        match lang {
-            BenchmarkLanguage::Scc => {
-                let bin_path = self.bin_path(lang)?;
-                let mut new_path = bin_path.clone();
-                let filename = bin_path.file_name().unwrap().to_string_lossy();
-                let filename = format!("{filename}_main");
 
-                new_path.set_file_name(filename);
+        let bin_path = self.bin_path(lang)?;
+        let mut new_path = bin_path.clone();
+        let filename = bin_path.file_name().unwrap().to_string_lossy();
+        let filename = format!("{filename}_{}", lang.suffix());
 
-                let mut cmd = Command::new("/bin/mv");
-                cmd.arg(bin_path.clone());
-                cmd.arg(new_path);
+        new_path.set_file_name(filename);
 
-                cmd.status()
-                    .map_err(|err| Error::file_access(&bin_path, "move", err))?
-                    .success()
-                    .then_some(())
-                    .ok_or(Error::path_access(&bin_path, "move file"))?
-            }
-            BenchmarkLanguage::SccLin => {
-                let bin_path = self.bin_path(lang)?;
-                let mut new_path = bin_path.clone();
-                let filename = bin_path.file_name().unwrap().to_string_lossy();
-                let filename = format!("{filename}_lin");
+        let mut cmd = Command::new("/bin/mv");
+        cmd.arg(bin_path.clone());
+        cmd.arg(new_path);
 
-                new_path.set_file_name(filename);
-
-                let mut cmd = Command::new("/bin/mv");
-                cmd.arg(bin_path.clone());
-                cmd.arg(new_path);
-
-                cmd.status()
-                    .map_err(|err| Error::file_access(&bin_path, "move", err))?
-                    .success()
-                    .then_some(())
-                    .ok_or(Error::path_access(&bin_path, "move"))?
-            }
-            BenchmarkLanguage::SccSf => {
-                let bin_path = self.bin_path(lang)?;
-                let mut new_path = bin_path.clone();
-                let filename = bin_path.file_name().unwrap().to_string_lossy();
-                let filename = format!("{filename}_sf");
-
-                new_path.set_file_name(filename);
-
-                let mut cmd = Command::new("/bin/mv");
-                cmd.arg(bin_path.clone());
-                cmd.arg(new_path);
-
-                cmd.status()
-                    .map_err(|err| Error::file_access(&bin_path, "move", err))?
-                    .success()
-                    .then_some(())
-                    .ok_or(Error::path_access(&bin_path, "move"))?
-            }
-        }
+        cmd.status()
+            .map_err(|err| Error::file_access(&bin_path, "move", err))?
+            .success()
+            .then_some(())
+            .ok_or(Error::path_access(&bin_path, "move file"))?;
         Ok(())
     }
 
@@ -189,40 +141,18 @@ impl Benchmark {
         Ok(results)
     }
 
-    pub fn run_cmd(&self, lang: &BenchmarkLanguage) -> Result<Command, Error> {
+    pub fn run_cmd(&self, lang: &BenchmarkCompiler) -> Result<Command, Error> {
         let bin_path = self.bin_path(lang)?;
-        match lang {
-            BenchmarkLanguage::Scc => {
-                let mut new_path = bin_path.clone();
-                let filename = bin_path.file_name().unwrap().to_string_lossy();
-                let filename = format!("{filename}_main");
+        let mut new_path = bin_path.clone();
+        let filename = bin_path.file_name().unwrap().to_string_lossy();
+        let filename = format!("{filename}_{}", lang.suffix());
 
-                new_path.set_file_name(filename);
+        new_path.set_file_name(filename);
 
-                Ok(Command::new(new_path))
-            }
-            BenchmarkLanguage::SccLin => {
-                let mut new_path = bin_path.clone();
-                let filename = bin_path.file_name().unwrap().to_string_lossy();
-                let filename = format!("{filename}_lin");
-
-                new_path.set_file_name(filename);
-
-                Ok(Command::new(new_path))
-            }
-            BenchmarkLanguage::SccSf => {
-                let mut new_path = bin_path.clone();
-                let filename = bin_path.file_name().unwrap().to_string_lossy();
-                let filename = format!("{filename}_sf");
-
-                new_path.set_file_name(filename);
-
-                Ok(Command::new(new_path))
-            }
-        }
+        Ok(Command::new(new_path))
     }
 
-    pub fn run(&self, lang: &BenchmarkLanguage, test: bool) -> Result<std::process::Output, Error> {
+    pub fn run(&self, lang: &BenchmarkCompiler, test: bool) -> Result<std::process::Output, Error> {
         let mut cmd = self.run_cmd(lang)?;
         let args = if test {
             &self.config.test_args
@@ -256,11 +186,7 @@ impl Benchmark {
             let path_err = Error::path_access(&bin_path, "Path as String");
 
             let bin_str = bin_path.to_str().ok_or(path_err)?.to_owned();
-            let mut call_str = match lang {
-                BenchmarkLanguage::Scc => format!("{bin_str}_main"),
-                BenchmarkLanguage::SccLin => format!("{bin_str}_lin"),
-                BenchmarkLanguage::SccSf => format!("{bin_str}_sf"),
-            };
+            let mut call_str = format!("{bin_str}_{}", lang.suffix());
             for arg in &self.config.args {
                 call_str.push(' ');
                 call_str.push_str(arg);
@@ -287,7 +213,7 @@ impl Benchmark {
     }
 
     pub fn load_all(
-        exclude_lang: &[BenchmarkLanguage],
+        exclude_lang: &[BenchmarkCompiler],
         exclude_bench: &[String],
     ) -> Result<Vec<Benchmark>, Error> {
         let mut benchmarks = vec![];
