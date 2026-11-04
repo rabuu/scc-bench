@@ -1,8 +1,23 @@
 from pathlib import Path
+
 import polars as pl
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+
+
+# ============================================================
+# Configuration
+# ============================================================
+
+VERSIONS = ["main", "lin", "sf"]
+BASELINE = "main"
+
+COLORS = {
+    "main": "#D0021B",
+    "lin": "#56B4E9",
+    "sf": "#fff600",
+}
 
 # SVG config
 mpl.rcParams.update({
@@ -15,34 +30,53 @@ mpl.rcParams.update({
     "figure.dpi": 150,
     "savefig.dpi": 300,
     "font.family": "Libertinus Sans",
-    "svg.fonttype": "none",  # IMPORTANT: keeps text as text in SVG (best for Typst)
+    "svg.fonttype": "none",
 })
+
+
+# ============================================================
+# Read CSV files
+# ============================================================
 
 rows = []
 
 for csv in Path("./results/raw").glob("*.csv"):
     benchmark = csv.stem
 
+    df = pl.read_csv(csv).select(["command", "mean", "stddev"])
+
+    # Dynamically detect version from executable suffix
+    variant_expr = pl.lit(None, dtype=pl.String)
+
+    for version in VERSIONS:
+        variant_expr = (
+            pl.when(
+                pl.col("command").str.contains(
+                    rf"_{version}(\s|$)"
+                )
+            )
+            .then(pl.lit(version))
+            .otherwise(variant_expr)
+        )
+
     df = (
-        pl.read_csv(csv)
-        .select(["command", "mean", "stddev"])
+        df
         .with_columns(
             pl.lit(benchmark).alias("benchmark"),
-            pl.when(pl.col("command").str.contains("_lin"))
-                .then(pl.lit("lin"))
-                .when(pl.col("command").str.contains("_sf"))
-                .then(pl.lit("sf"))
-                .otherwise(pl.lit("main"))
-                .alias("variant")
+            variant_expr.alias("variant"),
         )
+        .filter(pl.col("variant").is_not_null())
     )
 
     rows.append(df)
 
 df = pl.concat(rows)
-# df = df.filter(~pl.col("benchmark").str.contains("Goto"))
 
-# Columns: benchmark, mean_{main,lin,sf}, stddev_{main,lin,sf}
+
+# ============================================================
+# Pivot results
+# ============================================================
+
 results = (
     df
     .pivot(
@@ -50,113 +84,157 @@ results = (
         index="benchmark",
         on="variant",
     )
-    .with_columns(
-        (pl.col("mean_main") / pl.col("mean_lin")).alias("speedup_lin"),
-        (pl.col("mean_main") / pl.col("mean_sf")).alias("speedup_sf"),
-    )
 )
 
-# Table output (alphabetical by benchmark)
+# Normalize means and standard deviations against baseline
+for version in VERSIONS:
+    results = results.with_columns(
+        (
+            pl.col(f"mean_{version}")
+            / pl.col(f"mean_{BASELINE}")
+        ).alias(f"normalized_{version}"),
+
+        (
+            pl.col(f"stddev_{version}")
+            / pl.col(f"mean_{BASELINE}")
+        ).alias(f"normalized_stddev_{version}"),
+    )
+
+
+# ============================================================
+# Table output
+# ============================================================
+
+print("Normalized execution times and speedups:\n")
+
 for row in results.sort("benchmark").iter_rows(named=True):
-    print(
-        f"`{row['benchmark']}`, "
-        f"[{row['mean_main']:.5f}s], "
-        f"[{row['stddev_main']:.5f}s], "
-        f"[{row['mean_lin']:.5f}s], "
-        f"[{row['stddev_lin']:.5f}s], "
-        f"[{row['speedup_lin']:.3f}], "
-        f"[{row['mean_sf']:.5f}s], "
-        f"[{row['stddev_sf']:.5f}s], "
-        f"[{row['speedup_sf']:.3f}],"
+    values = ", ".join(
+        (
+            f"{version}: "
+            f"{row[f'normalized_{version}']:.3f} "
+            f"({1.0 / row[f'normalized_{version}']:.3f}×)"
+        )
+        for version in VERSIONS
     )
 
-geomeans = results.select(
-    pl.col("speedup_lin").log().mean().exp().alias("lin"),
-    pl.col("speedup_sf").log().mean().exp().alias("sf"),
-).row(0, named=True)
+    print(f"`{row['benchmark']}`, {values}")
 
-print(f"\nGeometric mean speedup (lin): {geomeans['lin']:.3f}×")
-print(f"Geometric mean speedup (sf):  {geomeans['sf']:.3f}×")
 
-# Plot order: by improvement of sf over main
-plot_res = results.sort("speedup_sf", descending=True)
-benchmarks = plot_res.get_column("benchmark").to_list()
+# ============================================================
+# Plot
+# ============================================================
 
-main_means = plot_res["mean_main"].to_list()
-lin_means = plot_res["mean_lin"].to_list()
-sf_means = plot_res["mean_sf"].to_list()
+# Sort benchmarks by performance of the last configured version
+plot_res = results.sort(
+    f"normalized_{VERSIONS[-1]}"
+)
 
-main_err = plot_res["stddev_main"].to_list()
-lin_err = plot_res["stddev_lin"].to_list()
-sf_err = plot_res["stddev_sf"].to_list()
+benchmarks = plot_res["benchmark"].to_list()
 
-speedups_lin = plot_res["speedup_lin"].to_list()
-speedups_sf = plot_res["speedup_sf"].to_list()
-
+n_versions = len(VERSIONS)
 spacing = 1.3
+
 y = np.arange(len(benchmarks)) * spacing
-bar_h = 0.26 * spacing
+bar_h = spacing * 0.8 / n_versions
 
-plt.figure(figsize=(10, 14))
-
-plt.barh(
-    y - bar_h,
-    main_means,
-    height=bar_h,
-    color="#D0021B",
-    label="baseline",
-    xerr=main_err,
-    capsize=2,
+fig, ax = plt.subplots(
+    figsize=(12, max(6, len(benchmarks) * 0.45))
 )
 
-plt.barh(
-    y,
-    lin_means,
-    height=bar_h,
-    color="#56B4E9",
-    label="lin",
-    xerr=lin_err,
-    capsize=2,
+# Collect normalized means and errors
+all_means = {
+    version: plot_res[f"normalized_{version}"].to_list()
+    for version in VERSIONS
+}
+
+all_errors = {
+    version: plot_res[f"normalized_stddev_{version}"].to_list()
+    for version in VERSIONS
+}
+
+# Calculate maximum bar extent
+global_max = max(
+    mean + error
+    for version in VERSIONS
+    for mean, error in zip(
+        all_means[version],
+        all_errors[version],
+    )
 )
 
-plt.barh(
-    y + bar_h,
-    sf_means,
-    height=bar_h,
-    color="#fff600",
-    label="sf",
-    xerr=sf_err,
-    capsize=2,
-)
+x_offset = global_max * 0.025
 
-global_max = max(main_means + lin_means + sf_means)
-x_offset = global_max * 0.03
+# Plot all versions
+for i, version in enumerate(VERSIONS):
+    means = all_means[version]
+    errors = all_errors[version]
 
-# Speedup (vs. baseline) next to the lin and sf bars
-for i in range(len(benchmarks)):
-    plt.text(
-        sf_means[i] + sf_err[i] + x_offset,
-        y[i] + bar_h,
-        f"{speedups_sf[i]:.2f}×",
-        va="center",
-        fontweight="bold",
-        color="black",
+    offset = (i - (n_versions - 1) / 2) * bar_h
+
+    ax.barh(
+        y + offset,
+        means,
+        height=bar_h,
+        color=COLORS[version],
+        label=version,
+        xerr=errors,
+        capsize=2,
     )
 
-plt.yticks(y, benchmarks)
-plt.xlabel("Mean execution time (s)")
+    # Speedup labels relative to baseline
+    for j, (mean, error) in enumerate(zip(means, errors)):
+        speedup = 1.0 / mean
 
-plt.gca().invert_yaxis()
-plt.gca().spines["top"].set_visible(False)
-plt.gca().spines["right"].set_visible(False)
-plt.legend(frameon=False, loc="lower right")
+        ax.text(
+            mean + error + x_offset,
+            y[j] + offset,
+            f"{speedup:.2f}×",
+            va="center",
+            ha="left",
+            fontsize=12,
+            fontweight="bold",
+            color="black",
+        )
 
-plt.grid(axis="x", linestyle="--", alpha=0.3)
-plt.tick_params(axis="y", pad=6)
 
-plt.margins(x=0.12, y=0.03)
+# ============================================================
+# Plot formatting
+# ============================================================
 
-plt.tight_layout()
+ax.set_yticks(y, benchmarks)
 
-plt.savefig("runtime.svg", bbox_inches="tight")
+ax.set_xlabel(
+    f"Normalized execution time (1.0 = {BASELINE})"
+)
+
+ax.invert_yaxis()
+
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+# Legend outside plotting area
+ax.legend(
+    frameon=False,
+    loc="center left",
+    bbox_to_anchor=(1.02, 0.5),
+)
+
+ax.grid(
+    axis="x",
+    linestyle="--",
+    alpha=0.3,
+)
+
+ax.tick_params(axis="y", pad=6)
+
+# Leave room for speedup labels
+ax.set_xlim(right=global_max * 1.25)
+
+plt.tight_layout(rect=[0, 0, 0.85, 1])
+
+plt.savefig(
+    "runtime.svg",
+    bbox_inches="tight",
+)
+
 plt.show()
