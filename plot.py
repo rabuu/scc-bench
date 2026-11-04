@@ -140,9 +140,14 @@ spacing = 1.3
 y = np.arange(len(benchmarks)) * spacing
 bar_h = spacing * 0.8 / n_versions
 
-fig, ax = plt.subplots(
-    figsize=(12, max(6, len(benchmarks) * 0.45))
-)
+# Vertical space per bar (inches) and label font size (pt).
+# Rule of thumb: bar height in pt (BAR_IN * 72) should be >= label font size.
+BAR_IN = 0.15
+LABEL_FS = 8
+
+fig_h = len(benchmarks) * n_versions * BAR_IN / 0.8 + 1.5  # 0.8 = bar fill ratio; +1.5 for axis/margins
+
+fig, ax = plt.subplots(figsize=(12, fig_h))
 
 # Collect normalized means and errors
 all_means = {
@@ -194,7 +199,7 @@ for i, version in enumerate(VERSIONS):
             f"{speedup:.2f}×",
             va="center",
             ha="left",
-            fontsize=12,
+            fontsize=LABEL_FS,
             fontweight="bold",
             color="black",
         )
