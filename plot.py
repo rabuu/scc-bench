@@ -122,6 +122,16 @@ for row in results.sort("benchmark").iter_rows(named=True):
 
     print(f"`{row['benchmark']}`, {values}")
 
+# ============================================================
+# Geometric mean speedup
+# ============================================================
+
+print("\nGeometric mean speedup over baseline:\n")
+
+for version in VERSIONS:
+    norm = results[f"normalized_{version}"].to_numpy()
+    geomean_speedup = np.exp(-np.mean(np.log(norm)))
+    print(f"{version}: {geomean_speedup:.3f}×")
 
 # ============================================================
 # Plot
