@@ -20,7 +20,16 @@ impl BenchmarkCompiler {
                 suffix: "lin".to_string(),
             },
             Self {
-                suffix: "sf".to_string(),
+                suffix: "sf1".to_string(),
+            },
+            Self {
+                suffix: "sf2".to_string(),
+            },
+            Self {
+                suffix: "sf3".to_string(),
+            },
+            Self {
+                suffix: "sf4".to_string(),
             },
         ]
     }

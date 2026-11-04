@@ -10,13 +10,16 @@ import matplotlib as mpl
 # Configuration
 # ============================================================
 
-VERSIONS = ["main", "lin", "sf"]
+VERSIONS = ["main", "lin", "sf1", "sf2", "sf3", "sf4"]
 BASELINE = "main"
 
 COLORS = {
     "main": "#D0021B",
-    "lin": "#56B4E9",
-    "sf": "#fff600",
+    "lin":  "#56B4E9",
+    "sf1":  "#E69F00",
+    "sf2":  "#009E73",
+    "sf3":  "#CC79A7",
+    "sf4":  "#0072B2",
 }
 
 # SVG config

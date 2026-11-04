@@ -4,21 +4,33 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
-    scc = {
-      url = "github:SequentCalculus/sequent-calculus-compiler";
+    scc-main = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     scc-lin = {
       url = "github:SequentCalculus/sequent-calculus-compiler/linear-continuations";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    scc-sf = {
-      url = "github:SequentCalculus/sequent-calculus-compiler/steadfast-axcut";
+    scc-sf1 = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/fc475608a0b2c12d98e50da95287155400d3cd9a";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    scc-sf2 = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/8b86954437338419581c3572147a303ccd3a3451";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    scc-sf3 = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/b9e35140111beaf20d6603e3f6955d74a2e05965";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    scc-sf4 = {
+      url = "github:SequentCalculus/sequent-calculus-compiler/79dd034d844b6952d41b74af7c3d7399e2c7a07d";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, scc, scc-lin, scc-sf, ... }:
+  outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -35,11 +47,17 @@
         dependencies = [
           #compilers
           (pkgs.writeShellScriptBin "scc-main"
-            ''${scc.packages.${system}.default}/bin/scc "$@"'')
+            ''${inputs.scc-main.packages.${system}.default}/bin/scc "$@"'')
           (pkgs.writeShellScriptBin "scc-lin"
-            ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
-          (pkgs.writeShellScriptBin "scc-sf"
-            ''${scc-sf.packages.${system}.default}/bin/scc "$@"'')
+            ''${inputs.scc-lin.packages.${system}.default}/bin/scc "$@"'')
+          (pkgs.writeShellScriptBin "scc-sf1"
+            ''${inputs.scc-sf1.packages.${system}.default}/bin/scc "$@"'')
+          (pkgs.writeShellScriptBin "scc-sf2"
+            ''${inputs.scc-sf2.packages.${system}.default}/bin/scc "$@"'')
+          (pkgs.writeShellScriptBin "scc-sf3"
+            ''${inputs.scc-sf3.packages.${system}.default}/bin/scc "$@"'')
+          (pkgs.writeShellScriptBin "scc-sf4"
+            ''${inputs.scc-sf4.packages.${system}.default}/bin/scc "$@"'')
 
           #required by rustc
           pkgs.gcc
