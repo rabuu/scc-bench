@@ -34,7 +34,8 @@
         ]);
         dependencies = [
           #compilers
-          scc.packages.${system}.default
+          (pkgs.writeShellScriptBin "scc-main"
+            ''${scc.packages.${system}.default}/bin/scc "$@"'')
           (pkgs.writeShellScriptBin "scc-lin"
             ''${scc-lin.packages.${system}.default}/bin/scc "$@"'')
           (pkgs.writeShellScriptBin "scc-sf"
