@@ -148,11 +148,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793536673,
-        "narHash": "sha256-Mha1fEnzgrN8XV4MLUVHk/vY6CAla6VVPcmSLZUDVS0=",
+        "lastModified": 1793619539,
+        "narHash": "sha256-nT1S+wwdZ96QMwvbYnQqtvlmg/8nj8D7m/TFFel16Bs=",
         "owner": "SequentCalculus",
         "repo": "sequent-calculus-compiler",
-        "rev": "f365d8d2a5a1b6f28ee9dccbe03275b9e08d2651",
+        "rev": "79dd034d844b6952d41b74af7c3d7399e2c7a07d",
         "type": "github"
       },
       "original": {
