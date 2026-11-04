@@ -14,10 +14,13 @@ impl BenchmarkCompiler {
     pub fn all() -> Vec<Self> {
         vec![
             Self {
-                suffix: "sf".to_string(),
+                suffix: "main".to_string(),
             },
             Self {
                 suffix: "lin".to_string(),
+            },
+            Self {
+                suffix: "sf".to_string(),
             },
         ]
     }

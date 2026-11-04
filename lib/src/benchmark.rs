@@ -57,7 +57,7 @@ impl Benchmark {
         })
     }
 
-    pub fn bin_path(&self, lang: &BenchmarkCompiler) -> Result<PathBuf, Error> {
+    pub fn bin_path(&self, _lang: &BenchmarkCompiler) -> Result<PathBuf, Error> {
         #[cfg(target_arch = "x86_64")]
         let bin_path = bin_path_x86();
         #[cfg(target_arch = "aarch64")]
