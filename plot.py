@@ -241,7 +241,7 @@ ax.set_xlim(right=global_max * 1.25)
 plt.tight_layout(rect=[0, 0, 0.85, 1])
 
 plt.savefig(
-    "runtime.svg",
+    "plot.svg",
     bbox_inches="tight",
 )
 
